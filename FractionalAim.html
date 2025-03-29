@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    canvas {
+      display: block;
+      margin: 20px auto;
+    }
+    .controls {
+      margin-top: 20px;
+    }
+    input[type="range"] {
+      width: 60%;
+      margin-right: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #feedback {
+      margin-top: 10px;
+      font-size: 18px;
+      color: green;
+    }
+    #averageDeviation {
+      font-size: 18px;
+      color: blue;
+    }
+    #recentDeviations {
+      font-size: 16px;
+      color: darkblue;
+      text-align: left;
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid lightgray;
+      padding: 5px;
+      background-color: white;
+    }
+    .footer {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+  <div class="controls">
+    <button id="newQuestionButton">New Question</button>
+    <br><br>
+    <input type="range" id="overlapSlider" min="1" max="32" value="32" step="1">
+    <span id="overlapValue">32/32</span>
+    <span id="angleValue"></span>
+    <button id="confirmButton">Confirm</button>
+    <div id="feedback"></div>
+  </div>
+
+  <div class="footer">
+    <div id="averageDeviation">Average Deviation: 0.0</div>
+    <div id="recentDeviations"></div>
+  </div>
+
+  <script>
+    // Canvas setup
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Constants
+    const BALL_RADIUS = 60; // Increased radius to make balls larger (1.5 times the previous size)
+    const BALL_DIAMETER = BALL_RADIUS * 2;
+    const CANVAS_WIDTH = canvas.width;
+    const CANVAS_HEIGHT = canvas.height;
+
+    let correctOverlap = Math.floor(Math.random() * 32) + 1; // Random value between 1 and 32
+    let objectBallOnLeft = Math.random() < 0.5; // Randomly decide if the object ball is on the left or right
+    let userChoices = []; // Array to store all user choices with their corresponding correctOverlap
+
+    function drawScene() {
+      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+      // Calculate positions
+      const cueBallX = CANVAS_WIDTH / 2;
+      const horizontalDistance = BALL_DIAMETER * (1 - correctOverlap / 32);
+      const objectBallX = objectBallOnLeft ? cueBallX - horizontalDistance : cueBallX + horizontalDistance;
+      const cueBallY = (CANVAS_HEIGHT * 3) / 4;
+      const objectBallY = CANVAS_HEIGHT / 4;
+
+      // Set stroke style and line width for consistency
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 1;
+
+      // Draw cue ball
+      ctx.beginPath();
+      ctx.arc(cueBallX, cueBallY, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = 'white';
+      ctx.fill();
+      ctx.stroke();
+
+      // Draw object ball
+      ctx.beginPath();
+      ctx.arc(objectBallX, objectBallY, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = 'red';
+      ctx.fill();
+      ctx.stroke();
+
+      // Draw cue line
+      ctx.beginPath();
+      ctx.moveTo(cueBallX, cueBallY + BALL_RADIUS);
+      ctx.lineTo(cueBallX, cueBallY + BALL_RADIUS + 50);
+      ctx.stroke();
+    }
+
+    function updateOverlapDisplay(value) {
+      const actualValue = objectBallOnLeft ? 33 - value : value;
+      document.getElementById('overlapValue').textContent = `${actualValue}/32`;
+      const angle = Math.asin(1 - actualValue / 32) * (180 / Math.PI);
+      document.getElementById('angleValue').textContent = ` (${angle.toFixed(1)}°)`;
+    }
+
+    function calculateAngleFromOverlap(overlap) {
+      return Math.asin(1 - overlap / 32) * (180 / Math.PI);
+    }
+
+    function calculateAverageDeviation() {
+      if (userChoices.length === 0) return 0;
+      const recentChoices = userChoices.slice(-5); // Get the last 5 choices
+      const totalDeviation = recentChoices.reduce((sum, choice) => sum + Math.abs(choice.choice - choice.correctOverlap), 0);
+      return totalDeviation / recentChoices.length;
+    }
+
+    function updateRecentDeviations() {
+      const deviationsDiv = document.getElementById('recentDeviations');
+      const recentChoices = userChoices.slice(-5); // Get the last 5 choices
+      const deviations = recentChoices.map(choice => `| Choice: ${choice.choice} | Correct: ${choice.correctOverlap} | Deviation: ${Math.abs(choice.choice - choice.correctOverlap)} |`);
+      deviationsDiv.innerHTML = deviations.join('<br>');
+    }
+
+    function checkAnswer(userChoice) {
+      const feedbackDiv = document.getElementById('feedback');
+      const actualChoice = objectBallOnLeft ? 33 - userChoice : userChoice;
+      const correctAngle = calculateAngleFromOverlap(correctOverlap).toFixed(1);
+      const chosenAngle = calculateAngleFromOverlap(actualChoice).toFixed(1);
+
+      if (actualChoice === correctOverlap) {
+        feedbackDiv.textContent = `Correct! The overlap is ${correctOverlap}/32 (${correctAngle}°).`;
+        feedbackDiv.style.color = 'green';
+      } else {
+        feedbackDiv.textContent = `Incorrect! The correct overlap was ${correctOverlap}/32 (${correctAngle}°). You chose ${actualChoice}/32 (${chosenAngle}°).`;
+        feedbackDiv.style.color = 'red';
+      }
+
+      // Store the user choice along with the current correctOverlap
+      userChoices.push({ choice: actualChoice, correctOverlap: correctOverlap });
+
+      // Calculate average deviation
+      const averageDeviation = calculateAverageDeviation();
+      document.getElementById('averageDeviation').textContent = `Average Deviation: ${averageDeviation.toFixed(1)}`;
+
+      // Update recent deviations
+      updateRecentDeviations();
+    }
+
+    function newQuestion() {
+      correctOverlap = Math.floor(Math.random() * 32) + 1; // Generate a new random correct overlap value
+      objectBallOnLeft = Math.random() < 0.5; // Randomly decide if the object ball is on the left or right
+      const sliderValue = objectBallOnLeft ? 1 : 32; // Set slider value based on object ball position
+      document.getElementById('overlapSlider').value = sliderValue; // Reset slider to default value
+      updateOverlapDisplay(sliderValue); // Update displayed overlap value
+      document.getElementById('feedback').textContent = ''; // Clear feedback message
+      drawScene(); // Redraw the scene
+    }
+
+    // Initialize game
+    drawScene();
+    newQuestion(); // Call newQuestion to initialize the slider correctly
+
+    // Event listeners
+    document.getElementById('overlapSlider').addEventListener('input', (event) => {
+      updateOverlapDisplay(event.target.value);
+    });
+
+    document.getElementById('confirmButton').addEventListener('click', () => {
+      const userChoice = parseInt(document.getElementById('overlapSlider').value, 10);
+      checkAnswer(userChoice);
+    });
+
+    document.getElementById('newQuestionButton').addEventListener('click', newQuestion);
+  </script>
+</body>
+</html>
