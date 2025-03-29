@@ -18,7 +18,7 @@
       margin-top: 20px;
     }
     input[type="range"] {
-      width: 60%;
+      width: 90%;
       margin-right: 10px;
     }
     button {
@@ -54,12 +54,12 @@
 <body>
   <canvas id="gameCanvas" width="400" height="530"></canvas>
   <div class="controls">
-    <input type="range" id="overlapSlider" min="1" max="32" value="32" step="1">
+    <button id="newButton">New</button>
+    <button id="confirmButton">Confirm</button>
     <span id="overlapValue">32/32</span>
     <span id="angleValue"></span>
     <br><br>
-    <button id="newQuestionButton">New Question</button>
-    <button id="confirmButton">Confirm</button>
+    <input type="range" id="overlapSlider" min="1" max="32" value="32" step="1">
     <div id="feedback"></div>
   </div>
 
@@ -284,7 +284,7 @@
       checkAnswer(userChoice);
     });
 
-    document.getElementById('newQuestionButton').addEventListener('click', newQuestion);
+    document.getElementById('newButton').addEventListener('click', newQuestion);
   </script>
 </body>
 </html>
