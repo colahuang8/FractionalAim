@@ -1,10 +1,12 @@
 # FractionalAim
 
 ## Introduction
-It is a training aid for billiards, specifically designed to help users develop an intuition for the cut angle in fractional ball aiming.
-
+It is a training aid for billiards, specifically designed to help users develop an intuition for the cut angle in fractional-ball aiming.
 
 <img src="examples.jpg" width="600" />
+
+## What is fractional-ball aiming?
+- The introduction can be found in https://drdavepoolinfo.com//faq/aiming/fractional/
 
 
 ## How to use
