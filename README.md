@@ -3,7 +3,7 @@
 ## Introduction
 It is a training aid for billiards, specifically designed to help users develop an intuition for the cut angle in fractional ball aiming.
 
-![Example](images/example.png)
+![Example](examples.jpg)
 
 
 ## How to use
