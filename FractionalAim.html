@@ -25,6 +25,7 @@
       padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
+      margin: 5px;
     }
     #feedback {
       margin-top: 10px;
@@ -51,13 +52,13 @@
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="400" height="400"></canvas>
+  <canvas id="gameCanvas" width="400" height="530"></canvas>
   <div class="controls">
-    <button id="newQuestionButton">New Question</button>
-    <br><br>
     <input type="range" id="overlapSlider" min="1" max="32" value="32" step="1">
     <span id="overlapValue">32/32</span>
     <span id="angleValue"></span>
+    <br><br>
+    <button id="newQuestionButton">New Question</button>
     <button id="confirmButton">Confirm</button>
     <div id="feedback"></div>
   </div>
@@ -73,15 +74,29 @@
     const ctx = canvas.getContext('2d');
 
     // Constants
-    const BALL_RADIUS = 60; // Increased radius to make balls larger (1.5 times the previous size)
-    const BALL_DIAMETER = BALL_RADIUS * 2;
+    const DEFAULT_BALL_RADIUS = 60; // Default radius of the balls
     const CANVAS_WIDTH = canvas.width;
     const CANVAS_HEIGHT = canvas.height;
 
     let correctOverlap = Math.floor(Math.random() * 32) + 1; // Random value between 1 and 32
     let objectBallOnLeft = Math.random() < 0.5; // Randomly decide if the object ball is on the left or right
+    let ballRadius = getRandomBallRadius(); // Randomize ball radius
+    let ballDiameter = ballRadius * 2;
+    let objectBallY = getRandomObjectBallY(); // Randomize object ball Y position
     let userChoices = []; // Array to store all user choices with their corresponding correctOverlap
     let showVerticalLine = false; // Flag to control whether to draw the vertical line
+
+    function getRandomObjectBallY() {
+      const minDistanceFromCueBallCenter = ballDiameter;
+      const cueBallY = (CANVAS_HEIGHT * 3) / 4;
+      const minY = Math.max(ballRadius, cueBallY - CANVAS_HEIGHT + minDistanceFromCueBallCenter);
+      const maxY = Math.min(CANVAS_HEIGHT - ballRadius, cueBallY - minDistanceFromCueBallCenter);
+      return Math.random() * (maxY - minY) + minY;
+    }
+
+    function getRandomBallRadius() {
+      return Math.random() * (DEFAULT_BALL_RADIUS - (DEFAULT_BALL_RADIUS * 2 / 3)) + (DEFAULT_BALL_RADIUS * 2 / 3);
+    }
 
     function drawScene(ghostBallX, ghostBallY, userChosenX) {
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -89,9 +104,8 @@
       // Calculate positions
       const cueBallX = CANVAS_WIDTH / 2;
       const cueBallY = (CANVAS_HEIGHT * 3) / 4;
-      const horizontalDistance = BALL_DIAMETER * (1 - correctOverlap / 32);
+      const horizontalDistance = ballDiameter * (1 - correctOverlap / 32);
       const objectBallX = objectBallOnLeft ? cueBallX - horizontalDistance : cueBallX + horizontalDistance;
-      const objectBallY = CANVAS_HEIGHT / 4;
 
       // Set stroke style and line width for consistency
       ctx.strokeStyle = 'black';
@@ -99,22 +113,22 @@
 
       // Draw cue ball
       ctx.beginPath();
-      ctx.arc(cueBallX, cueBallY, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.arc(cueBallX, cueBallY, ballRadius, 0, Math.PI * 2);
       ctx.fillStyle = 'white';
       ctx.fill();
       ctx.stroke();
 
       // Draw object ball
       ctx.beginPath();
-      ctx.arc(objectBallX, objectBallY, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.arc(objectBallX, objectBallY, ballRadius, 0, Math.PI * 2);
       ctx.fillStyle = 'red';
       ctx.fill();
       ctx.stroke();
 
       // Draw cue line
       ctx.beginPath();
-      ctx.moveTo(cueBallX, cueBallY + BALL_RADIUS);
-      ctx.lineTo(cueBallX, cueBallY + BALL_RADIUS + 50);
+      ctx.moveTo(cueBallX, cueBallY + ballRadius);
+      ctx.lineTo(cueBallX, cueBallY + ballRadius + 50);
       ctx.stroke();
 
       // Draw vertical dashed line at cue ball's x-coordinate if needed
@@ -173,7 +187,7 @@
 
       // Draw ghost ball
       ctx.beginPath();
-      ctx.arc(x, y, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
       ctx.stroke();
 
       // Reset line dash
@@ -188,7 +202,7 @@
 
       // Draw user chosen ball
       ctx.beginPath();
-      ctx.arc(x, y, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
       ctx.stroke();
 
       // Reset line dash
@@ -222,13 +236,12 @@
       // Redraw the scene including the ghost ball and vertical line
       const cueBallX = CANVAS_WIDTH / 2;
       const cueBallY = (CANVAS_HEIGHT * 3) / 4;
-      const horizontalDistance = BALL_DIAMETER * (1 - correctOverlap / 32);
+      const horizontalDistance = ballDiameter * (1 - correctOverlap / 32);
       const objectBallX = objectBallOnLeft ? cueBallX - horizontalDistance : cueBallX + horizontalDistance;
-      const objectBallY = CANVAS_HEIGHT / 4;
 
       // Calculate ghost ball position
       const ghostBallX = cueBallX;
-      const distanceBetweenCenters = BALL_DIAMETER;
+      const distanceBetweenCenters = ballDiameter;
       const deltaY = Math.sqrt(distanceBetweenCenters ** 2 - (objectBallX - ghostBallX) ** 2);
       const ghostBallY1 = objectBallY + deltaY;
       const ghostBallY2 = objectBallY - deltaY;
@@ -237,7 +250,7 @@
       const ghostBallY = Math.max(ghostBallY1, ghostBallY2);
 
       // Calculate user chosen ball position
-      const userChosenHorizontalDistance = BALL_DIAMETER * (1 - actualChoice / 32);
+      const userChosenHorizontalDistance = ballDiameter * (1 - actualChoice / 32);
       const userChosenX = objectBallOnLeft ? cueBallX - userChosenHorizontalDistance : cueBallX + userChosenHorizontalDistance;
 
       showVerticalLine = true; // Show the vertical line after confirming
@@ -247,6 +260,9 @@
     function newQuestion() {
       correctOverlap = Math.floor(Math.random() * 32) + 1; // Generate a new random correct overlap value
       objectBallOnLeft = Math.random() < 0.5; // Randomly decide if the object ball is on the left or right
+      ballRadius = getRandomBallRadius(); // Randomize ball radius
+      ballDiameter = ballRadius * 2;
+      objectBallY = getRandomObjectBallY(); // Randomize object ball Y position
       const sliderValue = objectBallOnLeft ? 1 : 32; // Set slider value based on object ball position
       document.getElementById('overlapSlider').value = sliderValue; // Reset slider to default value
       updateOverlapDisplay(sliderValue); // Update displayed overlap value
@@ -256,7 +272,6 @@
     }
 
     // Initialize game
-    drawScene();
     newQuestion(); // Call newQuestion to initialize the slider correctly
 
     // Event listeners
