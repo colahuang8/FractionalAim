@@ -7,7 +7,7 @@ It is a training aid for billiards, specifically designed to help users develop 
 
 ## What is fractional-ball aiming?
 - Estimate and obtain a cut angle, then aim using the cut angle.
-- The introduction can be found in https://drdavepoolinfo.com//faq/aiming/fractional/
+- An introduction can be found in https://drdavepoolinfo.com//faq/aiming/fractional/
 
 ## Accurate ways to calculate cut angle?
 - Way 1: https://www.youtube.com/watch?v=4PGSQiq5b9g
