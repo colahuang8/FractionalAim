@@ -16,6 +16,6 @@ It is a training aid for billiards, specifically designed to help users develop 
 ## How to practice accurate aiming using the cut angle?
 - A possible way is to use FractionalAim.
 
-## How to use FractionalAim
+## How to use FractionalAim?
 - It is cross-platform and can be opened on both computers and mobile devices. 
 - Simply open the FractionalAim.html file in a browser (such as Chrome or Edge) to use it directly.
