@@ -81,15 +81,16 @@
     let correctOverlap = Math.floor(Math.random() * 32) + 1; // Random value between 1 and 32
     let objectBallOnLeft = Math.random() < 0.5; // Randomly decide if the object ball is on the left or right
     let userChoices = []; // Array to store all user choices with their corresponding correctOverlap
+    let showVerticalLine = false; // Flag to control whether to draw the vertical line
 
-    function drawScene() {
+    function drawScene(ghostBallX, ghostBallY, userChosenX) {
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
       // Calculate positions
       const cueBallX = CANVAS_WIDTH / 2;
+      const cueBallY = (CANVAS_HEIGHT * 3) / 4;
       const horizontalDistance = BALL_DIAMETER * (1 - correctOverlap / 32);
       const objectBallX = objectBallOnLeft ? cueBallX - horizontalDistance : cueBallX + horizontalDistance;
-      const cueBallY = (CANVAS_HEIGHT * 3) / 4;
       const objectBallY = CANVAS_HEIGHT / 4;
 
       // Set stroke style and line width for consistency
@@ -115,6 +116,28 @@
       ctx.moveTo(cueBallX, cueBallY + BALL_RADIUS);
       ctx.lineTo(cueBallX, cueBallY + BALL_RADIUS + 50);
       ctx.stroke();
+
+      // Draw vertical dashed line at cue ball's x-coordinate if needed
+      if (showVerticalLine) {
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = 'gray';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cueBallX, 0);
+        ctx.lineTo(cueBallX, CANVAS_HEIGHT);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Draw user chosen ball if provided coordinates
+      if (userChosenX !== undefined) {
+        drawUserChosenBall(userChosenX, objectBallY);
+      }
+
+      // Draw ghost ball if provided coordinates
+      if (ghostBallX !== undefined && ghostBallY !== undefined) {
+        drawGhostBall(ghostBallX, ghostBallY);
+      }
     }
 
     function updateOverlapDisplay(value) {
@@ -142,6 +165,36 @@
       deviationsDiv.innerHTML = deviations.join('<br>');
     }
 
+    function drawGhostBall(x, y) {
+      // Set stroke style and line width for ghost ball
+      ctx.setLineDash([5, 5]); // Dashed line
+      ctx.strokeStyle = 'blue';
+      ctx.lineWidth = 2;
+
+      // Draw ghost ball
+      ctx.beginPath();
+      ctx.arc(x, y, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Reset line dash
+      ctx.setLineDash([]);
+    }
+
+    function drawUserChosenBall(x, y) {
+      // Set stroke style and line width for user chosen ball
+      ctx.setLineDash([5, 5]); // Dashed line
+      ctx.strokeStyle = 'green';
+      ctx.lineWidth = 2;
+
+      // Draw user chosen ball
+      ctx.beginPath();
+      ctx.arc(x, y, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Reset line dash
+      ctx.setLineDash([]);
+    }
+
     function checkAnswer(userChoice) {
       const feedbackDiv = document.getElementById('feedback');
       const actualChoice = objectBallOnLeft ? 33 - userChoice : userChoice;
@@ -165,6 +218,30 @@
 
       // Update recent deviations
       updateRecentDeviations();
+
+      // Redraw the scene including the ghost ball and vertical line
+      const cueBallX = CANVAS_WIDTH / 2;
+      const cueBallY = (CANVAS_HEIGHT * 3) / 4;
+      const horizontalDistance = BALL_DIAMETER * (1 - correctOverlap / 32);
+      const objectBallX = objectBallOnLeft ? cueBallX - horizontalDistance : cueBallX + horizontalDistance;
+      const objectBallY = CANVAS_HEIGHT / 4;
+
+      // Calculate ghost ball position
+      const ghostBallX = cueBallX;
+      const distanceBetweenCenters = BALL_DIAMETER;
+      const deltaY = Math.sqrt(distanceBetweenCenters ** 2 - (objectBallX - ghostBallX) ** 2);
+      const ghostBallY1 = objectBallY + deltaY;
+      const ghostBallY2 = objectBallY - deltaY;
+
+      // Choose the lower ghost ball Y coordinate
+      const ghostBallY = Math.max(ghostBallY1, ghostBallY2);
+
+      // Calculate user chosen ball position
+      const userChosenHorizontalDistance = BALL_DIAMETER * (1 - actualChoice / 32);
+      const userChosenX = objectBallOnLeft ? cueBallX - userChosenHorizontalDistance : cueBallX + userChosenHorizontalDistance;
+
+      showVerticalLine = true; // Show the vertical line after confirming
+      drawScene(ghostBallX, ghostBallY, userChosenX);
     }
 
     function newQuestion() {
@@ -174,7 +251,8 @@
       document.getElementById('overlapSlider').value = sliderValue; // Reset slider to default value
       updateOverlapDisplay(sliderValue); // Update displayed overlap value
       document.getElementById('feedback').textContent = ''; // Clear feedback message
-      drawScene(); // Redraw the scene
+      showVerticalLine = false; // Hide the vertical line when starting a new question
+      drawScene(); // Redraw the scene without ghost ball or vertical line
     }
 
     // Initialize game
@@ -195,3 +273,6 @@
   </script>
 </body>
 </html>
+
+
+
