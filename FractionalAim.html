@@ -18,7 +18,7 @@
       margin-top: 20px;
     }
     input[type="range"] {
-      width: 90%;
+      width: 60%;
       margin-right: 10px;
     }
     button {
@@ -49,6 +49,9 @@
     .footer {
       margin-top: 20px;
     }
+    #cdfCanvas {
+      margin: 20px auto;
+    }
   </style>
 </head>
 <body>
@@ -56,10 +59,11 @@
   <div class="controls">
     <button id="newButton">New</button>
     <button id="confirmButton">Confirm</button>
+    <br><br>
+    <input type="range" id="overlapSlider" min="1" max="32" value="32" step="1">
     <span id="overlapValue">32/32</span>
     <span id="angleValue"></span>
     <br><br>
-    <input type="range" id="overlapSlider" min="1" max="32" value="32" step="1">
     <div id="feedback"></div>
   </div>
 
@@ -68,15 +72,20 @@
     <div id="recentDeviations"></div>
   </div>
 
+  <canvas id="cdfCanvas" width="400" height="300"></canvas>
+
   <script>
     // Canvas setup
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+    const gameCanvas = document.getElementById('gameCanvas');
+    const gameCtx = gameCanvas.getContext('2d');
+
+    const cdfCanvas = document.getElementById('cdfCanvas');
+    const cdfCtx = cdfCanvas.getContext('2d');
 
     // Constants
     const DEFAULT_BALL_RADIUS = 60; // Default radius of the balls
-    const CANVAS_WIDTH = canvas.width;
-    const CANVAS_HEIGHT = canvas.height;
+    const CANVAS_WIDTH = gameCanvas.width;
+    const CANVAS_HEIGHT = gameCanvas.height;
 
     let correctOverlap = Math.floor(Math.random() * 32) + 1; // Random value between 1 and 32
     let objectBallOnLeft = Math.random() < 0.5; // Randomly decide if the object ball is on the left or right
@@ -99,7 +108,7 @@
     }
 
     function drawScene(ghostBallX, ghostBallY, userChosenX) {
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      gameCtx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
       // Calculate positions
       const cueBallX = CANVAS_WIDTH / 2;
@@ -108,39 +117,39 @@
       const objectBallX = objectBallOnLeft ? cueBallX - horizontalDistance : cueBallX + horizontalDistance;
 
       // Set stroke style and line width for consistency
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = 1;
+      gameCtx.strokeStyle = 'black';
+      gameCtx.lineWidth = 1;
 
       // Draw cue ball
-      ctx.beginPath();
-      ctx.arc(cueBallX, cueBallY, ballRadius, 0, Math.PI * 2);
-      ctx.fillStyle = 'white';
-      ctx.fill();
-      ctx.stroke();
+      gameCtx.beginPath();
+      gameCtx.arc(cueBallX, cueBallY, ballRadius, 0, Math.PI * 2);
+      gameCtx.fillStyle = 'white';
+      gameCtx.fill();
+      gameCtx.stroke();
 
       // Draw object ball
-      ctx.beginPath();
-      ctx.arc(objectBallX, objectBallY, ballRadius, 0, Math.PI * 2);
-      ctx.fillStyle = 'red';
-      ctx.fill();
-      ctx.stroke();
+      gameCtx.beginPath();
+      gameCtx.arc(objectBallX, objectBallY, ballRadius, 0, Math.PI * 2);
+      gameCtx.fillStyle = 'red';
+      gameCtx.fill();
+      gameCtx.stroke();
 
       // Draw cue line
-      ctx.beginPath();
-      ctx.moveTo(cueBallX, cueBallY + ballRadius);
-      ctx.lineTo(cueBallX, cueBallY + ballRadius + 50);
-      ctx.stroke();
+      gameCtx.beginPath();
+      gameCtx.moveTo(cueBallX, cueBallY + ballRadius);
+      gameCtx.lineTo(cueBallX, cueBallY + ballRadius + 50);
+      gameCtx.stroke();
 
       // Draw vertical dashed line at cue ball's x-coordinate if needed
       if (showVerticalLine) {
-        ctx.setLineDash([5, 5]);
-        ctx.strokeStyle = 'gray';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(cueBallX, 0);
-        ctx.lineTo(cueBallX, CANVAS_HEIGHT);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        gameCtx.setLineDash([5, 5]);
+        gameCtx.strokeStyle = 'gray';
+        gameCtx.lineWidth = 1;
+        gameCtx.beginPath();
+        gameCtx.moveTo(cueBallX, 0);
+        gameCtx.lineTo(cueBallX, CANVAS_HEIGHT);
+        gameCtx.stroke();
+        gameCtx.setLineDash([]);
       }
 
       // Draw user chosen ball if provided coordinates
@@ -181,32 +190,32 @@
 
     function drawGhostBall(x, y) {
       // Set stroke style and line width for ghost ball
-      ctx.setLineDash([5, 5]); // Dashed line
-      ctx.strokeStyle = 'blue';
-      ctx.lineWidth = 2;
+      gameCtx.setLineDash([5, 5]); // Dashed line
+      gameCtx.strokeStyle = 'blue';
+      gameCtx.lineWidth = 2;
 
       // Draw ghost ball
-      ctx.beginPath();
-      ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
-      ctx.stroke();
+      gameCtx.beginPath();
+      gameCtx.arc(x, y, ballRadius, 0, Math.PI * 2);
+      gameCtx.stroke();
 
       // Reset line dash
-      ctx.setLineDash([]);
+      gameCtx.setLineDash([]);
     }
 
     function drawUserChosenBall(x, y) {
       // Set stroke style and line width for user chosen ball
-      ctx.setLineDash([5, 5]); // Dashed line
-      ctx.strokeStyle = 'green';
-      ctx.lineWidth = 2;
+      gameCtx.setLineDash([5, 5]); // Dashed line
+      gameCtx.strokeStyle = 'green';
+      gameCtx.lineWidth = 2;
 
       // Draw user chosen ball
-      ctx.beginPath();
-      ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
-      ctx.stroke();
+      gameCtx.beginPath();
+      gameCtx.arc(x, y, ballRadius, 0, Math.PI * 2);
+      gameCtx.stroke();
 
       // Reset line dash
-      ctx.setLineDash([]);
+      gameCtx.setLineDash([]);
     }
 
     function checkAnswer(userChoice) {
@@ -255,6 +264,9 @@
 
       showVerticalLine = true; // Show the vertical line after confirming
       drawScene(ghostBallX, ghostBallY, userChosenX);
+
+      // Update CDF plot
+      updateCDFPlot();
     }
 
     function newQuestion() {
@@ -269,6 +281,86 @@
       document.getElementById('feedback').textContent = ''; // Clear feedback message
       showVerticalLine = false; // Hide the vertical line when starting a new question
       drawScene(); // Redraw the scene without ghost ball or vertical line
+
+      // Update CDF plot
+      updateCDFPlot();
+    }
+
+    function updateCDFPlot() {
+      const deviations = userChoices.map(choice => Math.abs(choice.choice - choice.correctOverlap));
+      deviations.sort((a, b) => a - b);
+
+      const n = deviations.length;
+      const dataPoints = deviations.map((deviation, index) => ({
+        x: deviation,
+        y: (index + 1) / n
+      }));
+
+      cdfCtx.clearRect(0, 0, cdfCanvas.width, cdfCanvas.height);
+
+      // Check if there are any data points to plot
+      if (dataPoints.length === 0) {
+        return;
+      }
+
+      // Define axis limits and scales
+      const xAxisMin = 0;
+      const xAxisMax = 10;
+      const yAxisMin = 0;
+      const yAxisMax = 1;
+      const xAxisLength = 300;
+      const yAxisLength = 200;
+      const startX = 50;
+      const startY = 250;
+
+      // Draw axes
+      cdfCtx.beginPath();
+      cdfCtx.moveTo(startX, startY);
+      cdfCtx.lineTo(startX + xAxisLength, startY);
+      cdfCtx.moveTo(startX, startY);
+      cdfCtx.lineTo(startX, startY - yAxisLength);
+      cdfCtx.stroke();
+
+      // Label axes
+      cdfCtx.font = '14px Arial';
+      cdfCtx.textAlign = 'center';
+      cdfCtx.fillText('Deviation', startX + xAxisLength / 2, startY + 40); // Adjusted vertical position
+      cdfCtx.save();
+      cdfCtx.translate(startX - 30, startY - yAxisLength / 2);
+      cdfCtx.rotate(-Math.PI / 2);
+      cdfCtx.textAlign = 'center';
+      cdfCtx.fillText('Cumulative Probability', 0, 0);
+      cdfCtx.restore();
+
+      // Draw x-axis ticks and labels
+      for (let i = 0; i <= xAxisMax; i += 2) {
+        const tickX = startX + (i / xAxisMax) * xAxisLength;
+        cdfCtx.beginPath();
+        cdfCtx.moveTo(tickX, startY);
+        cdfCtx.lineTo(tickX, startY + 5);
+        cdfCtx.stroke();
+        cdfCtx.fillText(i.toString(), tickX, startY + 20);
+      }
+
+      // Draw y-axis ticks and labels
+      for (let j = 0; j <= 1; j += 0.2) {
+        const tickY = startY - (j / yAxisMax) * yAxisLength;
+        cdfCtx.beginPath();
+        cdfCtx.moveTo(startX, tickY);
+        cdfCtx.lineTo(startX - 5, tickY);
+        cdfCtx.stroke();
+        cdfCtx.fillText(j.toFixed(1), startX - 15, tickY + 7); // Adjusted horizontal position
+      }
+
+      // Draw CDF line
+      cdfCtx.beginPath();
+      cdfCtx.moveTo(startX + (dataPoints[0].x / xAxisMax) * xAxisLength, startY - (dataPoints[0].y / yAxisMax) * yAxisLength);
+      for (let i = 1; i < dataPoints.length; i++) {
+        cdfCtx.lineTo(startX + (dataPoints[i].x / xAxisMax) * xAxisLength, startY - (dataPoints[i].y / yAxisMax) * yAxisLength);
+      }
+      cdfCtx.strokeStyle = 'blue';
+      cdfCtx.lineWidth = 2;
+      cdfCtx.stroke();
     }
 
     // Initialize game
