@@ -18,7 +18,7 @@
       margin-top: 20px;
     }
     input[type="range"] {
-      width: 60%;
+      width: 90%; /* Adjusted to 90% */
       margin-right: 10px;
     }
     button {
@@ -52,18 +52,35 @@
     #cdfCanvas {
       margin: 20px auto;
     }
+    .button-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+    .slider-container {
+      margin-top: 10px;
+    }
+    .overlap-value-container {
+      display: inline-block;
+      margin-left: 10px;
+    }
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="400" height="530"></canvas>
+  <canvas id="gameCanvas"></canvas>
   <div class="controls">
-    <button id="newButton">New</button>
-    <button id="confirmButton">Confirm</button>
-    <br><br>
-    <input type="range" id="overlapSlider" min="1" max="32" value="32" step="1">
-    <span id="overlapValue">32/32</span>
-    <span id="angleValue"></span>
-    <br><br>
+    <div class="button-container">
+      <button id="newButton">New</button>
+      <button id="confirmButton">Confirm</button>
+      <div class="overlap-value-container">
+        <span id="overlapValue">32/32</span>
+        <span id="angleValue"></span>
+      </div>
+    </div>
+    <div class="slider-container">
+      <input type="range" id="overlapSlider" min="1" max="32" value="32" step="1">
+    </div>
     <div id="feedback"></div>
   </div>
 
@@ -72,20 +89,31 @@
     <div id="recentDeviations"></div>
   </div>
 
-  <canvas id="cdfCanvas" width="400" height="300"></canvas>
+  <canvas id="cdfCanvas"></canvas>
 
   <script>
-    // Canvas setup
-    const gameCanvas = document.getElementById('gameCanvas');
-    const gameCtx = gameCanvas.getContext('2d');
+    // Function to set up high-resolution canvas
+    function setupHighResCanvas(canvasId, width, height) {
+      const canvas = document.getElementById(canvasId);
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
 
-    const cdfCanvas = document.getElementById('cdfCanvas');
-    const cdfCtx = cdfCanvas.getContext('2d');
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      return ctx;
+    }
+
+    // Canvas setup
+    const gameCtx = setupHighResCanvas('gameCanvas', 400, 530);
+    const cdfCtx = setupHighResCanvas('cdfCanvas', 400, 300);
 
     // Constants
     const DEFAULT_BALL_RADIUS = 60; // Default radius of the balls
-    const CANVAS_WIDTH = gameCanvas.width;
-    const CANVAS_HEIGHT = gameCanvas.height;
+    const CANVAS_WIDTH = gameCtx.canvas.width / (window.devicePixelRatio || 1);
+    const CANVAS_HEIGHT = gameCtx.canvas.height / (window.devicePixelRatio || 1);
 
     let correctOverlap = Math.floor(Math.random() * 32) + 1; // Random value between 1 and 32
     let objectBallOnLeft = Math.random() < 0.5; // Randomly decide if the object ball is on the left or right
@@ -296,7 +324,7 @@
         y: (index + 1) / n
       }));
 
-      cdfCtx.clearRect(0, 0, cdfCanvas.width, cdfCanvas.height);
+      cdfCtx.clearRect(0, 0, cdfCtx.canvas.width, cdfCtx.canvas.height);
 
       // Check if there are any data points to plot
       if (dataPoints.length === 0) {
