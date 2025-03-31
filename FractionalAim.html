@@ -65,6 +65,17 @@
       display: inline-block;
       margin-left: 10px;
     }
+    .angle-distance-slider-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .angle-level-label,
+    .distance-label {
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
@@ -90,6 +101,14 @@
   </div>
 
   <canvas id="cdfCanvas"></canvas>
+
+  <div class="angle-distance-slider-container">
+    <label class="angle-level-label">Angle Level: <span id="angleLevel">4</span></label>
+    <input type="range" id="angleSlider" min="1" max="4" value="4" step="1">
+
+    <label class="distance-label">Distance:</label>
+    <input type="range" id="distanceSlider" min="0" max="5" value="0" step="1">
+  </div>
 
   <script>
     // Function to set up high-resolution canvas
@@ -122,6 +141,8 @@
     let objectBallY = getRandomObjectBallY(); // Randomize object ball Y position
     let userChoices = []; // Array to store all user choices with their corresponding correctOverlap
     let showVerticalLine = false; // Flag to control whether to draw the vertical line
+    let angleSetting = 4; // Default angle setting
+    let distanceSetting = 0; // Default distance setting
 
     function getRandomObjectBallY() {
       const minDistanceFromCueBallCenter = ballDiameter;
@@ -133,6 +154,40 @@
 
     function getRandomBallRadius() {
       return Math.random() * (DEFAULT_BALL_RADIUS - (DEFAULT_BALL_RADIUS * 2 / 3)) + (DEFAULT_BALL_RADIUS * 2 / 3);
+    }
+
+    function updateOverlapRange(angleSetting) {
+      let min, max, step;
+      switch (angleSetting) {
+        case 1:
+          min = 8;
+          max = 32;
+          step = 8;
+          break;
+        case 2:
+          min = 4;
+          max = 32;
+          step = 4;
+          break;
+        case 3:
+          min = 2;
+          max = 32;
+          step = 2;
+          break;
+        case 4:
+        default:
+          min = 1;
+          max = 32;
+          step = 1;
+          break;
+      }
+      const overlapSlider = document.getElementById('overlapSlider');
+      overlapSlider.min = min;
+      overlapSlider.max = max;
+      overlapSlider.step = step;
+      // Set overlapSlider value based on objectBallOnLeft
+      overlapSlider.value = objectBallOnLeft ? min : max;
+      updateOverlapDisplay(overlapSlider.value);
     }
 
     function drawScene(ghostBallX, ghostBallY, userChosenX) {
@@ -192,7 +247,7 @@
     }
 
     function updateOverlapDisplay(value) {
-      const actualValue = objectBallOnLeft ? 33 - value : value;
+      const actualValue = objectBallOnLeft ? (parseInt(document.getElementById('overlapSlider').max, 10) - parseInt(value, 10) + parseInt(document.getElementById('overlapSlider').min, 10)) : parseInt(value, 10);
       document.getElementById('overlapValue').textContent = `${actualValue}/32`;
       const angle = Math.asin(1 - actualValue / 32) * (180 / Math.PI);
       document.getElementById('angleValue').textContent = ` (${angle.toFixed(1)}°)`;
@@ -248,7 +303,8 @@
 
     function checkAnswer(userChoice) {
       const feedbackDiv = document.getElementById('feedback');
-      const actualChoice = objectBallOnLeft ? 33 - userChoice : userChoice;
+      const overlapSlider = document.getElementById('overlapSlider');
+      const actualChoice = objectBallOnLeft ? (parseInt(overlapSlider.max, 10) - parseInt(userChoice, 10) + parseInt(overlapSlider.min, 10)) : parseInt(userChoice, 10);
       const correctAngle = calculateAngleFromOverlap(correctOverlap).toFixed(1);
       const chosenAngle = calculateAngleFromOverlap(actualChoice).toFixed(1);
 
@@ -298,20 +354,84 @@
     }
 
     function newQuestion() {
-      correctOverlap = Math.floor(Math.random() * 32) + 1; // Generate a new random correct overlap value
-      objectBallOnLeft = Math.random() < 0.5; // Randomly decide if the object ball is on the left or right
-      ballRadius = getRandomBallRadius(); // Randomize ball radius
+      // First, decide if the object ball is on the left or right
+      objectBallOnLeft = Math.random() < 0.5;
+
+      // Then, update the overlap range based on the angle setting
+      updateOverlapRange(angleSetting);
+
+      // Generate a random correctOverlap based on the current range
+      const overlapSlider = document.getElementById('overlapSlider');
+      const min = parseInt(overlapSlider.min, 10);
+      const max = parseInt(overlapSlider.max, 10);
+      const step = parseInt(overlapSlider.step, 10);
+      correctOverlap = min + Math.floor(Math.random() * ((max - min) / step + 1)) * step;
+
+      // Randomize ball radius and diameter
+      ballRadius = getRandomBallRadius();
       ballDiameter = ballRadius * 2;
-      objectBallY = getRandomObjectBallY(); // Randomize object ball Y position
-      const sliderValue = objectBallOnLeft ? 1 : 32; // Set slider value based on object ball position
-      document.getElementById('overlapSlider').value = sliderValue; // Reset slider to default value
-      updateOverlapDisplay(sliderValue); // Update displayed overlap value
-      document.getElementById('feedback').textContent = ''; // Clear feedback message
-      showVerticalLine = false; // Hide the vertical line when starting a new question
-      drawScene(); // Redraw the scene without ghost ball or vertical line
+
+      // Determine object ball Y position based on distance setting
+      switch (distanceSetting) {
+        case 0:
+          objectBallY = getRandomObjectBallY();
+          break;
+        case 1:
+          objectBallY = getExactDistanceObjectBallY();
+          break;
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+          objectBallY = getRandomObjectBallYInRange(distanceSetting);
+          break;
+        default:
+          objectBallY = getRandomObjectBallY();
+          break;
+      }
+
+      // Clear feedback message
+      document.getElementById('feedback').textContent = '';
+
+      // Hide the vertical line when starting a new question
+      showVerticalLine = false;
+
+      // Redraw the scene without ghost ball or vertical line
+      drawScene();
 
       // Update CDF plot
       updateCDFPlot();
+    }
+
+    function getExactDistanceObjectBallY() {
+      const cueBallY = (CANVAS_HEIGHT * 3) / 4;
+      return cueBallY - ballDiameter;
+    }
+
+    function getRandomObjectBallYInRange(rangeOption) {
+      const minDistanceFromCueBallCenter = ballDiameter;
+      const cueBallY = (CANVAS_HEIGHT * 3) / 4;
+      const minY = Math.max(ballRadius, cueBallY - CANVAS_HEIGHT + minDistanceFromCueBallCenter);
+      const maxY = Math.min(CANVAS_HEIGHT - ballRadius, cueBallY - minDistanceFromCueBallCenter);
+
+      // Divide the range into four parts in reverse order
+      const partHeight = (maxY - minY) / 4;
+      const ranges = [
+        [minY + 3 * partHeight, maxY],       // Top (2)
+        [minY + 2 * partHeight, minY + 3 * partHeight], // Upper middle (3)
+        [minY + partHeight, minY + 2 * partHeight], // Lower middle (4)
+        [minY, minY + partHeight]             // Bottom (5)
+      ];
+
+      const selectedRange = ranges[rangeOption - 2]; // Indexing from 0
+
+      // Keep generating random values until one falls within the selected range
+      let randomY;
+      do {
+        randomY = getRandomObjectBallY();
+      } while (randomY < selectedRange[0] || randomY > selectedRange[1]);
+
+      return randomY;
     }
 
     function updateCDFPlot() {
@@ -400,14 +520,23 @@
     });
 
     document.getElementById('confirmButton').addEventListener('click', () => {
-      const userChoice = parseInt(document.getElementById('overlapSlider').value, 10);
+      const overlapSlider = document.getElementById('overlapSlider');
+      const userChoice = overlapSlider.value;
       checkAnswer(userChoice);
     });
 
     document.getElementById('newButton').addEventListener('click', newQuestion);
+
+    document.getElementById('angleSlider').addEventListener('input', (event) => {
+      angleSetting = parseInt(event.target.value, 10);
+      document.getElementById('angleLevel').textContent = angleSetting;
+      newQuestion(); // Regenerate the question to apply the new angle setting
+    });
+
+    document.getElementById('distanceSlider').addEventListener('input', (event) => {
+      distanceSetting = parseInt(event.target.value, 10);
+      newQuestion(); // Regenerate the question to apply the new distance setting
+    });
   </script>
 </body>
 </html>
-
-
-
