@@ -58,9 +58,6 @@
       align-items: center;
       gap: 10px;
     }
-    .slider-container {
-      margin-top: 10px;
-    }
     .overlap-value-container {
       display: inline-block;
       margin-left: 10px;
@@ -130,30 +127,36 @@
     const cdfCtx = setupHighResCanvas('cdfCanvas', 400, 300);
 
     // Constants
-    const DEFAULT_BALL_RADIUS = 60; // Default radius of the balls
+    const BASE_CUE_BALL_RADIUS = 20; // Base radius of the cue ball before scaling
+    const SCALING_FACTOR = 2.5; // Scaling factor for the cue ball
     const CANVAS_WIDTH = gameCtx.canvas.width / (window.devicePixelRatio || 1);
     const CANVAS_HEIGHT = gameCtx.canvas.height / (window.devicePixelRatio || 1);
 
     let correctOverlap = Math.floor(Math.random() * 32) + 1; // Random value between 1 and 32
     let objectBallOnLeft = Math.random() < 0.5; // Randomly decide if the object ball is on the left or right
-    let ballRadius = getRandomBallRadius(); // Randomize ball radius
-    let ballDiameter = ballRadius * 2;
+    let cueBallRadius = BASE_CUE_BALL_RADIUS * SCALING_FACTOR; // Scaled cue ball radius
+    let cueBallDiameter = cueBallRadius * 2;
+    let objectBallRadius = getRandomObjectBallRadius(); // Random object ball radius
+    let objectBallDiameter = objectBallRadius * 2;
     let objectBallY = getRandomObjectBallY(); // Randomize object ball Y position
     let userChoices = []; // Array to store all user choices with their corresponding correctOverlap
     let showVerticalLine = false; // Flag to control whether to draw the vertical line
     let angleSetting = 4; // Default angle setting
     let distanceSetting = 0; // Default distance setting
 
-    function getRandomObjectBallY() {
-      const minDistanceFromCueBallCenter = ballDiameter;
-      const cueBallY = (CANVAS_HEIGHT * 3) / 4;
-      const minY = Math.max(ballRadius, cueBallY - CANVAS_HEIGHT + minDistanceFromCueBallCenter);
-      const maxY = Math.min(CANVAS_HEIGHT - ballRadius, cueBallY - minDistanceFromCueBallCenter);
-      return Math.random() * (maxY - minY) + minY;
+    function getRandomObjectBallRadius() {
+      const minFactor = 0.7;
+      const maxFactor = 0.9;
+      const scaleFactor = minFactor + Math.random() * (maxFactor - minFactor);
+      return cueBallRadius * scaleFactor;
     }
 
-    function getRandomBallRadius() {
-      return Math.random() * (DEFAULT_BALL_RADIUS - (DEFAULT_BALL_RADIUS * 2 / 3)) + (DEFAULT_BALL_RADIUS * 2 / 3);
+    function getRandomObjectBallY() {
+      const minDistanceFromCueBallCenter = cueBallDiameter;
+      const cueBallY = (CANVAS_HEIGHT * 3) / 4 - 50; // Moved cue ball up by 50 units
+      const minY = Math.max(cueBallRadius, cueBallY - CANVAS_HEIGHT + minDistanceFromCueBallCenter);
+      const maxY = Math.min(CANVAS_HEIGHT - cueBallRadius, cueBallY - minDistanceFromCueBallCenter);
+      return Math.random() * (maxY - minY) + minY;
     }
 
     function updateOverlapRange(angleSetting) {
@@ -195,8 +198,8 @@
 
       // Calculate positions
       const cueBallX = CANVAS_WIDTH / 2;
-      const cueBallY = (CANVAS_HEIGHT * 3) / 4;
-      const horizontalDistance = ballDiameter * (1 - correctOverlap / 32);
+      const cueBallY = (CANVAS_HEIGHT * 3) / 4 - 50; // Moved cue ball up by 50 units
+      const horizontalDistance = objectBallDiameter * (1 - correctOverlap / 32); // Use objectBallDiameter here
       const objectBallX = objectBallOnLeft ? cueBallX - horizontalDistance : cueBallX + horizontalDistance;
 
       // Set stroke style and line width for consistency
@@ -205,22 +208,22 @@
 
       // Draw cue ball
       gameCtx.beginPath();
-      gameCtx.arc(cueBallX, cueBallY, ballRadius, 0, Math.PI * 2);
+      gameCtx.arc(cueBallX, cueBallY, cueBallRadius, 0, Math.PI * 2);
       gameCtx.fillStyle = 'white';
       gameCtx.fill();
       gameCtx.stroke();
 
       // Draw object ball
       gameCtx.beginPath();
-      gameCtx.arc(objectBallX, objectBallY, ballRadius, 0, Math.PI * 2);
+      gameCtx.arc(objectBallX, objectBallY, objectBallRadius, 0, Math.PI * 2);
       gameCtx.fillStyle = 'red';
       gameCtx.fill();
       gameCtx.stroke();
 
-      // Draw cue line
+      // Draw cue line ending at cue ball's center
       gameCtx.beginPath();
-      gameCtx.moveTo(cueBallX, cueBallY + ballRadius);
-      gameCtx.lineTo(cueBallX, cueBallY + ballRadius + 50);
+      gameCtx.moveTo(cueBallX, cueBallY);
+      gameCtx.lineTo(cueBallX, cueBallY + CANVAS_HEIGHT / 2); // Lengthened to 1/2 of canvas height
       gameCtx.stroke();
 
       // Draw vertical dashed line at cue ball's x-coordinate if needed
@@ -279,7 +282,7 @@
 
       // Draw ghost ball
       gameCtx.beginPath();
-      gameCtx.arc(x, y, ballRadius, 0, Math.PI * 2);
+      gameCtx.arc(x, y, objectBallRadius, 0, Math.PI * 2);
       gameCtx.stroke();
 
       // Reset line dash
@@ -294,7 +297,7 @@
 
       // Draw user chosen ball
       gameCtx.beginPath();
-      gameCtx.arc(x, y, ballRadius, 0, Math.PI * 2);
+      gameCtx.arc(x, y, objectBallRadius, 0, Math.PI * 2);
       gameCtx.stroke();
 
       // Reset line dash
@@ -328,23 +331,15 @@
 
       // Redraw the scene including the ghost ball and vertical line
       const cueBallX = CANVAS_WIDTH / 2;
-      const cueBallY = (CANVAS_HEIGHT * 3) / 4;
-      const horizontalDistance = ballDiameter * (1 - correctOverlap / 32);
-      const objectBallX = objectBallOnLeft ? cueBallX - horizontalDistance : cueBallX + horizontalDistance;
+      const cueBallY = (CANVAS_HEIGHT * 3) / 4 - 50; // Moved cue ball up by 50 units
+
+      // Calculate user chosen ball X position
+      const horizontalDistanceUser = objectBallDiameter * (1 - actualChoice / 32);
+      const userChosenX = objectBallOnLeft ? cueBallX - horizontalDistanceUser : cueBallX + horizontalDistanceUser;
 
       // Calculate ghost ball position
       const ghostBallX = cueBallX;
-      const distanceBetweenCenters = ballDiameter;
-      const deltaY = Math.sqrt(distanceBetweenCenters ** 2 - (objectBallX - ghostBallX) ** 2);
-      const ghostBallY1 = objectBallY + deltaY;
-      const ghostBallY2 = objectBallY - deltaY;
-
-      // Choose the lower ghost ball Y coordinate
-      const ghostBallY = Math.max(ghostBallY1, ghostBallY2);
-
-      // Calculate user chosen ball position
-      const userChosenHorizontalDistance = ballDiameter * (1 - actualChoice / 32);
-      const userChosenX = objectBallOnLeft ? cueBallX - userChosenHorizontalDistance : cueBallX + userChosenHorizontalDistance;
+      const ghostBallY = objectBallY; // Ghost ball has the same Y coordinate as the object ball
 
       showVerticalLine = true; // Show the vertical line after confirming
       drawScene(ghostBallX, ghostBallY, userChosenX);
@@ -357,7 +352,11 @@
       // First, decide if the object ball is on the left or right
       objectBallOnLeft = Math.random() < 0.5;
 
-      // Then, update the overlap range based on the angle setting
+      // Then, generate a random object ball radius
+      objectBallRadius = getRandomObjectBallRadius();
+      objectBallDiameter = objectBallRadius * 2;
+
+      // Update the overlap range based on the angle setting
       updateOverlapRange(angleSetting);
 
       // Generate a random correctOverlap based on the current range
@@ -366,10 +365,6 @@
       const max = parseInt(overlapSlider.max, 10);
       const step = parseInt(overlapSlider.step, 10);
       correctOverlap = min + Math.floor(Math.random() * ((max - min) / step + 1)) * step;
-
-      // Randomize ball radius and diameter
-      ballRadius = getRandomBallRadius();
-      ballDiameter = ballRadius * 2;
 
       // Determine object ball Y position based on distance setting
       switch (distanceSetting) {
@@ -404,15 +399,15 @@
     }
 
     function getExactDistanceObjectBallY() {
-      const cueBallY = (CANVAS_HEIGHT * 3) / 4;
-      return cueBallY - ballDiameter;
+      const cueBallY = (CANVAS_HEIGHT * 3) / 4 - 50; // Moved cue ball up by 50 units
+      return cueBallY - cueBallDiameter;
     }
 
     function getRandomObjectBallYInRange(rangeOption) {
-      const minDistanceFromCueBallCenter = ballDiameter;
-      const cueBallY = (CANVAS_HEIGHT * 3) / 4;
-      const minY = Math.max(ballRadius, cueBallY - CANVAS_HEIGHT + minDistanceFromCueBallCenter);
-      const maxY = Math.min(CANVAS_HEIGHT - ballRadius, cueBallY - minDistanceFromCueBallCenter);
+      const minDistanceFromCueBallCenter = cueBallDiameter;
+      const cueBallY = (CANVAS_HEIGHT * 3) / 4 - 50; // Moved cue ball up by 50 units
+      const minY = Math.max(cueBallRadius, cueBallY - CANVAS_HEIGHT + minDistanceFromCueBallCenter);
+      const maxY = Math.min(CANVAS_HEIGHT - cueBallRadius, cueBallY - minDistanceFromCueBallCenter);
 
       // Divide the range into four parts in reverse order
       const partHeight = (maxY - minY) / 4;
@@ -540,3 +535,6 @@
   </script>
 </body>
 </html>
+
+
+
