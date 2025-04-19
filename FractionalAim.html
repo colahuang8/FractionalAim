@@ -220,11 +220,8 @@
       gameCtx.fill();
       gameCtx.stroke();
 
-      // Draw cue line ending at cue ball's center
-      gameCtx.beginPath();
-      gameCtx.moveTo(cueBallX, cueBallY);
-      gameCtx.lineTo(cueBallX, cueBallY + CANVAS_HEIGHT / 2); // Lengthened to 1/2 of canvas height
-      gameCtx.stroke();
+      // Draw cue trapezoid
+      drawCueTrapezoid(cueBallX, cueBallY);
 
       // Draw vertical dashed line at cue ball's x-coordinate if needed
       if (showVerticalLine) {
@@ -247,6 +244,31 @@
       if (ghostBallX !== undefined && ghostBallY !== undefined) {
         drawGhostBall(ghostBallX, ghostBallY);
       }
+    }
+
+    function drawCueTrapezoid(centerX, centerY) {
+      const topBaseLength = cueBallRadius / 3;
+      const bottomBaseLength = topBaseLength * 1.8; // Increased the length of the bottom base
+      const height = CANVAS_HEIGHT / 2; // Lengthened to 1/2 of canvas height
+
+      const topLeftX = centerX - topBaseLength / 2;
+      const topLeftY = centerY;
+      const topRightX = centerX + topBaseLength / 2;
+      const topRightY = centerY;
+      const bottomLeftX = centerX - bottomBaseLength / 2;
+      const bottomLeftY = centerY + height;
+      const bottomRightX = centerX + bottomBaseLength / 2;
+      const bottomRightY = centerY + height;
+
+      gameCtx.beginPath();
+      gameCtx.moveTo(topLeftX, topLeftY);
+      gameCtx.lineTo(topRightX, topRightY);
+      gameCtx.lineTo(bottomRightX, bottomRightY);
+      gameCtx.lineTo(bottomLeftX, bottomLeftY);
+      gameCtx.closePath();
+      gameCtx.fillStyle = 'black'; // Filled the trapezoid black
+      gameCtx.fill();
+      gameCtx.stroke();
     }
 
     function updateOverlapDisplay(value) {
